@@ -2,8 +2,11 @@
 
 Chrono Trigger button fix v2.0 by reyqn
 
+#Disables first created button
 002B85D5 D0 58
 002B85D6 AF 1C
 002B85D7 F3 00
 002B85D8 FF 00
+
+#Do no create other buttons
 002B85E5 1A 20

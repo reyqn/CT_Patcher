@@ -23,26 +23,27 @@ int staging(std::fstream &file, std::string (&lineContent)[3], std::vector<std::
     return 0;
 }
 
-int backup(std::fstream &file)
+int backup(std::fstream &file, std::string filePath)
 {
-    std::ofstream backup("libcocos2d.dll.old", std::ios::binary);
+    std::ofstream backup(filePath + ".old", std::ios::binary);
     file.seekg(0);
     backup << file.rdbuf();
     backup.close();
     return 0;
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    std::fstream file("libcocos2d.dll", std::ios::binary | std::ios::in | std::ios::out);
-    std::ifstream diff("patch.dif");
-    std::string line, log;
+    std::string filePath, diffPath, line, log;
+    ((argc == 3) ? (filePath = argv[1] , diffPath = argv[2]) : (filePath = "libcocos2d.dll" , diffPath = "patch.dif"));
+    std::fstream file(filePath, std::ios::binary | std::ios::in | std::ios::out);
+    std::ifstream diff(diffPath);
     std::string lineContent[3];
     std::vector<std::pair<int,char>> patch;
 
     if (!file.is_open() || !diff.is_open())
     {
-        log = "Please place CT_Patcher.exe and patch.dif in your game directory (with libcocosd2.dll).";
+        log = "Please place CT_Patcher.exe and " + diffPath + " in your game directory (with " + filePath + ").";
     }
     else
     {
@@ -53,13 +54,13 @@ int main()
                 std::istringstream iss(line);
                 if (!(iss >> lineContent[0] >> lineContent[1] >> lineContent[2]) || line.at(0) != '0')
                 {
-                    std::cout << line + "\n" << std::endl;
+                    std::cout << line << std::endl;
                 }
                 else
                 {
                     if (staging(file, lineContent, patch) != 0)
                     {
-                        log = "File has already been patched at this offset.";
+                        log = "Unexpected value at offset 0x" + lineContent[0] + ". Has file already been patched?";
                     }
                 }
             }
@@ -68,7 +69,7 @@ int main()
 
     if (log.empty())
     {
-        backup(file);
+        backup(file, filePath);
         for (auto &it : patch)
         {
             int position = it.first;
@@ -76,7 +77,7 @@ int main()
             file.seekg(position);
             file.write(&newChar, sizeof(newChar));
         }
-        log = "Patch applied succesfully! Backup of original created (libcocos2d.dll.old).";
+        log = "Patch applied successfully! Backup of original created (" + filePath + ".old).";
     }
 
     file.close();
